@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>VulnGuard AI — Choix du Logo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #e2e8f0;
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  h1 {
+    text-align: center;
+    color: #ef4444;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .subtitle {
+    text-align: center;
+    color: #555;
+    font-size: 0.8rem;
+    margin-bottom: 48px;
+    letter-spacing: 0.1em;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #111;
+    border: 1px solid #1f1f1f;
+    border-radius: 12px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(239,68,68,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .card:hover {
+    border-color: #ef4444;
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(239,68,68,0.15);
+  }
+  .logo-num {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 0.7rem;
+    color: #333;
+    letter-spacing: 0.15em;
+  }
+  .logo-name {
+    font-size: 0.75rem;
+    color: #ef4444;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .logo-desc {
+    font-size: 0.7rem;
+    color: #444;
+    text-align: center;
+    line-height: 1.6;
+    letter-spacing: 0.05em;
+  }
+  .logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 24px;
+  }
+</style>
+</head>
+<body>
+
+<h1>VulnGuard AI — Sélection du Logo</h1>
+<p class="subtitle">Survolez un logo pour voir la sélection // Choisissez votre design</p>
+
+<div class="grid">
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LOGO 1 : Shield Guardian                                   -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <span class="logo-num">LOGO 01</span>
+    <div class="logo-box">
+      <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1a" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="100%" stop-color="#f97316"/>
+          </linearGradient>
+          <filter id="glow1">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Shield outer -->
+        <path d="M100 18 L162 44 L162 94 C162 134 130 164 100 178 C70 164 38 134 38 94 L38 44 Z"
+              fill="none" stroke="url(#g1a)" stroke-width="2.5" filter="url(#glow1)"/>
+        <!-- Shield inner -->
+        <path d="M100 30 L150 52 L150 94 C150 126 124 152 100 165 C76 152 50 126 50 94 L50 52 Z"
+              fill="#0f0a0a" stroke="#ef4444" stroke-width="0.8" stroke-opacity="0.4"/>
+
+        <!-- Circuit lines inside -->
+        <line x1="72" y1="80" x2="85" y2="80" stroke="#ef4444" stroke-width="1.5" stroke-opacity="0.6"/>
+        <line x1="85" y1="80" x2="85" y2="68" stroke="#ef4444" stroke-width="1.5" stroke-opacity="0.6"/>
+        <circle cx="85" cy="68" r="2.5" fill="#ef4444" filter="url(#glow1)"/>
+
+        <line x1="128" y1="80" x2="115" y2="80" stroke="#f97316" stroke-width="1.5" stroke-opacity="0.6"/>
+        <line x1="115" y1="80" x2="115" y2="68" stroke="#f97316" stroke-width="1.5" stroke-opacity="0.6"/>
+        <circle cx="115" cy="68" r="2.5" fill="#f97316" filter="url(#glow1)"/>
+
+        <line x1="72" y1="120" x2="85" y2="120" stroke="#ef4444" stroke-width="1.5" stroke-opacity="0.6"/>
+        <line x1="85" y1="120" x2="85" y2="132" stroke="#ef4444" stroke-width="1.5" stroke-opacity="0.6"/>
+        <circle cx="85" cy="132" r="2.5" fill="#ef4444" filter="url(#glow1)"/>
+
+        <line x1="128" y1="120" x2="115" y2="120" stroke="#f97316" stroke-width="1.5" stroke-opacity="0.6"/>
+        <line x1="115" y1="120" x2="115" y2="132" stroke="#f97316" stroke-width="1.5" stroke-opacity="0.6"/>
+        <circle cx="115" cy="132" r="2.5" fill="#f97316" filter="url(#glow1)"/>
+
+        <!-- VG text -->
+        <text x="100" y="107" text-anchor="middle" font-family="monospace" font-weight="900"
+              font-size="28" fill="url(#g1a)" filter="url(#glow1)" letter-spacing="-1">VG</text>
+
+        <!-- Bottom text -->
+        <text x="100" y="192" text-anchor="middle" font-family="monospace" font-size="9"
+              fill="#ef4444" letter-spacing="4" opacity="0.8">VULNGUARD AI</text>
+      </svg>
+    </div>
+    <div class="logo-name">Shield Guardian</div>
+    <div class="logo-desc">Bouclier classique cybersécurité<br>avec circuits et dégradé rouge-orange</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LOGO 2 : Hexagon Matrix                                    -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <span class="logo-num">LOGO 02</span>
+    <div class="logo-box">
+      <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g2a" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="100%" stop-color="#f97316"/>
+          </linearGradient>
+          <filter id="glow2">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Outer hex -->
+        <polygon points="100,18 168,58 168,138 100,178 32,138 32,58"
+                 fill="none" stroke="url(#g2a)" stroke-width="2" filter="url(#glow2)"/>
+        <!-- Mid hex -->
+        <polygon points="100,36 150,65 150,123 100,152 50,123 50,65"
+                 fill="none" stroke="#ef4444" stroke-width="0.8" stroke-opacity="0.3"/>
+        <!-- Inner hex -->
+        <polygon points="100,54 132,72 132,108 100,126 68,108 68,72"
+                 fill="#1a0808" stroke="#f97316" stroke-width="1.5" stroke-opacity="0.5"/>
+
+        <!-- Corner dots -->
+        <circle cx="100" cy="18" r="3" fill="#ef4444" filter="url(#glow2)"/>
+        <circle cx="168" cy="58" r="3" fill="#ef4444" filter="url(#glow2)"/>
+        <circle cx="168" cy="138" r="3" fill="#f97316" filter="url(#glow2)"/>
+        <circle cx="100" cy="178" r="3" fill="#f97316" filter="url(#glow2)"/>
+        <circle cx="32" cy="138" r="3" fill="#ef4444" filter="url(#glow2)"/>
+        <circle cx="32" cy="58" r="3" fill="#ef4444" filter="url(#glow2)"/>
+
+        <!-- AI eye center -->
+        <ellipse cx="100" cy="97" rx="18" ry="11" fill="none" stroke="url(#g2a)" stroke-width="2"/>
+        <circle cx="100" cy="97" r="5" fill="url(#g2a)" filter="url(#glow2)"/>
+        <circle cx="100" cy="97" r="2" fill="#0a0a0a"/>
+
+        <!-- Scan lines -->
+        <line x1="68" y1="97" x2="80" y2="97" stroke="#ef4444" stroke-width="1" opacity="0.5"/>
+        <line x1="120" y1="97" x2="132" y2="97" stroke="#ef4444" stroke-width="1" opacity="0.5"/>
+
+        <!-- Text -->
+        <text x="100" y="192" text-anchor="middle" font-family="monospace" font-size="9"
+              fill="#ef4444" letter-spacing="4" opacity="0.9">VULNGUARD AI</text>
+      </svg>
+    </div>
+    <div class="logo-name">Hexagon Matrix</div>
+    <div class="logo-desc">Hexagone triple avec œil scanner<br>Style hacker / réseau neuronal</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LOGO 3 : Terminal Vanguard                                 -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <span class="logo-num">LOGO 03</span>
+    <div class="logo-box">
+      <svg width="240" height="140" viewBox="0 0 240 140" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g3a" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="100%" stop-color="#f97316"/>
+          </linearGradient>
+          <filter id="glow3">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Terminal frame -->
+        <rect x="8" y="8" width="224" height="124" rx="10" fill="#0d0d0d"
+              stroke="#ef4444" stroke-width="1.5" stroke-opacity="0.6"/>
+        <!-- Title bar -->
+        <rect x="8" y="8" width="224" height="26" rx="10" fill="#111"/>
+        <rect x="8" y="24" width="224" height="10" fill="#111"/>
+        <!-- Dots -->
+        <circle cx="26" cy="21" r="4" fill="#ef4444" opacity="0.8"/>
+        <circle cx="40" cy="21" r="4" fill="#f97316" opacity="0.8"/>
+        <circle cx="54" cy="21" r="4" fill="#555" opacity="0.8"/>
+
+        <!-- Terminal text line 1 -->
+        <text x="20" y="58" font-family="monospace" font-size="11" fill="#555">&gt; initiating scan...</text>
+        <!-- Line 2 -->
+        <text x="20" y="75" font-family="monospace" font-size="11" fill="#22c55e" opacity="0.7">✓ CVE database loaded</text>
+
+        <!-- Main logo text -->
+        <text x="20" y="104" font-family="monospace" font-weight="900" font-size="30"
+              fill="url(#g3a)" filter="url(#glow3)" letter-spacing="-1">VulnGuard</text>
+        <text x="183" y="104" font-family="monospace" font-weight="900" font-size="30"
+              fill="#ef4444" filter="url(#glow3)">_</text>
+
+        <!-- AI badge -->
+        <rect x="163" y="108" width="30" height="14" rx="3" fill="#ef4444" opacity="0.15"
+              stroke="#ef4444" stroke-width="1"/>
+        <text x="178" y="119" text-anchor="middle" font-family="monospace" font-size="8"
+              fill="#ef4444" letter-spacing="1">AI</text>
+      </svg>
+    </div>
+    <div class="logo-name">Terminal Vanguard</div>
+    <div class="logo-desc">Style terminal hacker avec curseur<br>Look "code en cours d'exécution"</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LOGO 4 : Geometric Dragon                                  -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <span class="logo-num">LOGO 04</span>
+    <div class="logo-box">
+      <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g4a" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="50%" stop-color="#dc2626"/>
+            <stop offset="100%" stop-color="#f97316"/>
+          </linearGradient>
+          <filter id="glow4">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Abstract V shape wings -->
+        <path d="M100 50 L40 120 L62 120 L100 72 L138 120 L160 120 Z"
+              fill="url(#g4a)" filter="url(#glow4)" opacity="0.9"/>
+        <!-- Wing details left -->
+        <path d="M100 60 L50 118 L62 118 L100 75 Z"
+              fill="#0a0a0a" opacity="0.5"/>
+        <!-- Wing details right -->
+        <path d="M100 60 L150 118 L138 118 L100 75 Z"
+              fill="#0a0a0a" opacity="0.5"/>
+
+        <!-- Center diamond -->
+        <polygon points="100,68 113,90 100,112 87,90"
+                 fill="url(#g4a)" filter="url(#glow4)"/>
+        <polygon points="100,76 108,90 100,104 92,90"
+                 fill="#0a0a0a"/>
+
+        <!-- Glow dots -->
+        <circle cx="100" cy="50" r="4" fill="#f97316" filter="url(#glow4)"/>
+        <circle cx="40" cy="120" r="3" fill="#ef4444" filter="url(#glow4)"/>
+        <circle cx="160" cy="120" r="3" fill="#ef4444" filter="url(#glow4)"/>
+
+        <!-- Side accents -->
+        <line x1="25" y1="90" x2="45" y2="90" stroke="#ef4444" stroke-width="1.5" opacity="0.4"/>
+        <line x1="155" y1="90" x2="175" y2="90" stroke="#ef4444" stroke-width="1.5" opacity="0.4"/>
+        <circle cx="25" cy="90" r="2" fill="#ef4444" opacity="0.5"/>
+        <circle cx="175" cy="90" r="2" fill="#ef4444" opacity="0.5"/>
+
+        <!-- Text -->
+        <text x="100" y="148" text-anchor="middle" font-family="monospace" font-weight="900"
+              font-size="20" fill="url(#g4a)" filter="url(#glow4)" letter-spacing="2">VULNGUARD</text>
+        <text x="100" y="165" text-anchor="middle" font-family="monospace" font-size="9"
+              fill="#f97316" letter-spacing="8" opacity="0.7">AI</text>
+
+        <!-- Underline accent -->
+        <line x1="60" y1="170" x2="140" y2="170" stroke="url(#g4a)" stroke-width="1.5" opacity="0.4"/>
+      </svg>
+    </div>
+    <div class="logo-name">Geometric Dragon</div>
+    <div class="logo-desc">Symbole en V — ailes géométriques<br>Minimaliste et impactant</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LOGO 5 : Neural Scan                                       -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <span class="logo-num">LOGO 05</span>
+    <div class="logo-box">
+      <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g5a" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="100%" stop-color="#f97316"/>
+          </linearGradient>
+          <linearGradient id="g5b" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ef4444" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#f97316" stop-opacity="0.2"/>
+          </linearGradient>
+          <filter id="glow5">
+            <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Outer circle ring -->
+        <circle cx="100" cy="95" r="68" fill="none" stroke="url(#g5a)"
+                stroke-width="1.5" stroke-dasharray="6 4" filter="url(#glow5)"/>
+        <!-- Mid circle -->
+        <circle cx="100" cy="95" r="52" fill="none" stroke="#ef4444"
+                stroke-width="1" stroke-opacity="0.3"/>
+
+        <!-- Cross hairs -->
+        <line x1="100" y1="27" x2="100" y2="43" stroke="#ef4444" stroke-width="2" filter="url(#glow5)"/>
+        <line x1="100" y1="147" x2="100" y2="163" stroke="#ef4444" stroke-width="2" filter="url(#glow5)"/>
+        <line x1="32" y1="95" x2="48" y2="95" stroke="#ef4444" stroke-width="2" filter="url(#glow5)"/>
+        <line x1="152" y1="95" x2="168" y2="95" stroke="#ef4444" stroke-width="2" filter="url(#glow5)"/>
+
+        <!-- Corner brackets -->
+        <path d="M48 55 L48 43 L60 43" fill="none" stroke="#f97316" stroke-width="2.5" filter="url(#glow5)"/>
+        <path d="M152 55 L152 43 L140 43" fill="none" stroke="#f97316" stroke-width="2.5" filter="url(#glow5)"/>
+        <path d="M48 135 L48 147 L60 147" fill="none" stroke="#f97316" stroke-width="2.5" filter="url(#glow5)"/>
+        <path d="M152 135 L152 147 L140 147" fill="none" stroke="#f97316" stroke-width="2.5" filter="url(#glow5)"/>
+
+        <!-- Shield center -->
+        <path d="M100 62 L124 73 L124 95 C124 111 112 123 100 130 C88 123 76 111 76 95 L76 73 Z"
+              fill="url(#g5b)" stroke="url(#g5a)" stroke-width="2" filter="url(#glow5)"/>
+
+        <!-- VG inside shield -->
+        <text x="100" y="103" text-anchor="middle" font-family="monospace" font-weight="900"
+              font-size="22" fill="white" filter="url(#glow5)">VG</text>
+
+        <!-- Corner coordinates -->
+        <text x="36" y="40" font-family="monospace" font-size="7" fill="#ef4444" opacity="0.5">00°</text>
+        <text x="150" y="40" font-family="monospace" font-size="7" fill="#ef4444" opacity="0.5">90°</text>
+
+        <!-- Bottom text -->
+        <text x="100" y="188" text-anchor="middle" font-family="monospace" font-size="9"
+              fill="#ef4444" letter-spacing="4" opacity="0.9">VULNGUARD AI</text>
+      </svg>
+    </div>
+    <div class="logo-name">Neural Scan</div>
+    <div class="logo-desc">Réticule de visée avec bouclier<br>Style militaire / surveillance</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LOGO 6 : Code Monogram                                     -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <span class="logo-num">LOGO 06</span>
+    <div class="logo-box">
+      <svg width="220" height="160" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g6a" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="100%" stop-color="#f97316"/>
+          </linearGradient>
+          <filter id="glow6">
+            <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Brackets left -->
+        <text x="8" y="95" font-family="monospace" font-weight="900" font-size="80"
+              fill="#ef4444" opacity="0.15">{</text>
+        <!-- Brackets right -->
+        <text x="185" y="95" font-family="monospace" font-weight="900" font-size="80"
+              fill="#ef4444" opacity="0.15">}</text>
+
+        <!-- VG Big monogram -->
+        <text x="110" y="94" text-anchor="middle" font-family="monospace" font-weight="900"
+              font-size="62" fill="url(#g6a)" filter="url(#glow6)" letter-spacing="-4">VG</text>
+
+        <!-- Dot accent -->
+        <circle cx="142" cy="60" r="5" fill="#f97316" filter="url(#glow6)"/>
+
+        <!-- Bottom label -->
+        <text x="110" y="126" text-anchor="middle" font-family="monospace" font-size="10"
+              fill="#666" letter-spacing="6">VULNGUARD</text>
+
+        <!-- AI tag -->
+        <rect x="90" y="132" width="40" height="16" rx="4" fill="#ef4444" opacity="0.12"
+              stroke="#ef4444" stroke-width="1" stroke-opacity="0.5"/>
+        <text x="110" y="144" text-anchor="middle" font-family="monospace" font-size="9"
+              fill="#ef4444" letter-spacing="3">AI</text>
+      </svg>
+    </div>
+    <div class="logo-name">Code Monogram</div>
+    <div class="logo-desc">Monogramme VG dans accolades<br>Minimaliste, typographique, moderne</div>
+  </div>
+
+</div>
+
+<div style="text-align:center; margin-top: 48px; color: #333; font-size: 0.75rem; letter-spacing: 0.1em;">
+  Dites "Logo 1", "Logo 2"... pour choisir votre design
+</div>
+
+</body>
+</html>

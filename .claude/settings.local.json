@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($python = \"C:\\\\Users\\\\HP\\\\Desktop\\\\VulnAI\\\\backend\\\\venv\\\\Scripts\\\\python.exe\"; Set-Location \"C:\\\\Users\\\\HP\\\\Desktop\\\\VulnAI\\\\backend\"; & $python -c \"import main\" 2>&1 | Select-Object -First 40)",
+      "PowerShell($env:PYTHONIOENCODING = \"utf-8\"; Set-Location \"C:\\\\Users\\\\HP\\\\Desktop\\\\VulnAI\\\\backend\"; & \".\\\\venv\\\\Scripts\\\\uvicorn.exe\" main:app --reload --port 8000 2>&1 | Select-Object -First 15)",
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files\\\\nodejs\" -ErrorAction SilentlyContinue; Get-ChildItem \"C:\\\\Program Files \\(x86\\)\\\\nodejs\" -ErrorAction SilentlyContinue; $env:PATH -split \";\" | Where-Object { $_ -match \"node\" })"
+    ]
+  }
+}

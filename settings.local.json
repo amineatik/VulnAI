@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(gh auth *)",
+      "PowerShell(gh auth status 2>&1)",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)",
+      "Bash(sed -i \"s/ease: 'easeOut' }/ease: 'easeOut' as const }/g\" \\\\ *)",
+      "Bash(sed -i 's/ease: '\\\\''easeOut'\\\\'' }/ease: '\\\\''easeOut'\\\\'' as const }/g' /c/Users/HP/Desktop/VulnAI/.claude/worktrees/angry-bouman-6d7733/frontend/app/profile/page.tsx /c/Users/HP/Desktop/VulnAI/.claude/worktrees/angry-bouman-6d7733/frontend/app/security/page.tsx /c/Users/HP/Desktop/VulnAI/.claude/worktrees/angry-bouman-6d7733/frontend/app/settings/page.tsx)",
+      "Bash(sed -i \"s/ease: 'easeOut' }/ease: 'easeOut' as const }/g\" \"/c/Users/HP/Desktop/VulnAI/.claude/worktrees/angry-bouman-6d7733/frontend/app/scans/[id]/page.tsx\")",
+      "PowerShell(\\(Get-Item \"C:\\\\Users\\\\HP\\\\Desktop\\\\VulnAI\\\\.claude\\\\worktrees\\\\angry-bouman-6d7733\\\\frontend\\\\components\\\\main-layout.tsx\"\\).Length)"
+    ]
+  }
+}

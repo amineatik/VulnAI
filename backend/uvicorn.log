@@ -1,0 +1,14 @@
+[CONFIG] Database: MySQL on localhost
+[CONFIG] Ollama URL: http://localhost:11434
+INFO:     127.0.0.1:61834 - "GET /scans/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61834 - "GET /vulnerabilities/severity/critical?limit=15 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61834 - "GET /vulnerabilities/?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61837 - "POST /scans/ HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:61839 - "GET /users/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61835 - "GET /scans/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61835 - "GET /vulnerabilities/severity/critical?limit=15 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61835 - "GET /vulnerabilities/?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61863 - "GET /auth/me HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61862 - "GET /scans/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61862 - "GET /vulnerabilities/severity/critical?limit=15 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61862 - "GET /vulnerabilities/?limit=20 HTTP/1.1" 200 OK

@@ -1,0 +1,73 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ga" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="50%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <linearGradient id="gb" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.05"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-sm">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+  <!-- Subtle inner glow -->
+  <rect width="512" height="512" rx="96" fill="url(#gb)"/>
+
+  <!-- ── V WINGS ────────────────────────────────────────── -->
+  <path d="M256 72 L56 312 L114 312 L256 148 L398 312 L456 312 Z"
+        fill="url(#ga)" filter="url(#glow)"/>
+
+  <!-- Wing shadow cutouts -->
+  <path d="M256 100 L72 310 L114 310 L256 170 Z"
+        fill="#0a0a0a" opacity="0.5"/>
+  <path d="M256 100 L440 310 L398 310 L256 170 Z"
+        fill="#0a0a0a" opacity="0.5"/>
+
+  <!-- ── CENTER DIAMOND ─────────────────────────────────── -->
+  <polygon points="256,148 316,256 256,364 196,256"
+           fill="url(#ga)" filter="url(#glow)"/>
+  <!-- Diamond inner void -->
+  <polygon points="256,192 292,256 256,320 220,256"
+           fill="#0a0a0a"/>
+  <!-- Diamond inner glow ring -->
+  <polygon points="256,192 292,256 256,320 220,256"
+           fill="none" stroke="#f97316" stroke-width="2" opacity="0.3"/>
+
+  <!-- ── TOP DOT ─────────────────────────────────────────── -->
+  <circle cx="256" cy="72" r="16" fill="#f97316" filter="url(#glow)"/>
+  <circle cx="256" cy="72" r="8" fill="#fff" opacity="0.9"/>
+
+  <!-- ── WING TIP DOTS ──────────────────────────────────── -->
+  <circle cx="56" cy="312" r="8" fill="#ef4444" filter="url(#glow-sm)"/>
+  <circle cx="456" cy="312" r="8" fill="#ef4444" filter="url(#glow-sm)"/>
+
+  <!-- ── SIDE ACCENT LINES ──────────────────────────────── -->
+  <line x1="20" y1="256" x2="60" y2="256" stroke="#ef4444" stroke-width="4" opacity="0.4"/>
+  <circle cx="20" cy="256" r="4" fill="#ef4444" opacity="0.4"/>
+  <line x1="452" y1="256" x2="492" y2="256" stroke="#ef4444" stroke-width="4" opacity="0.4"/>
+  <circle cx="492" cy="256" r="4" fill="#ef4444" opacity="0.4"/>
+
+  <!-- ── BOTTOM TEXT ─────────────────────────────────────── -->
+  <text x="256" y="408" text-anchor="middle"
+        font-family="'IBM Plex Mono', monospace" font-weight="900"
+        font-size="62" fill="url(#ga)" filter="url(#glow-sm)"
+        letter-spacing="6">VULNGUARD</text>
+
+  <text x="256" y="446" text-anchor="middle"
+        font-family="'IBM Plex Mono', monospace" font-size="28"
+        fill="#f97316" letter-spacing="22" opacity="0.8">AI</text>
+
+  <!-- Underline -->
+  <line x1="120" y1="455" x2="392" y2="455" stroke="url(#ga)" stroke-width="2" opacity="0.4"/>
+</svg>
