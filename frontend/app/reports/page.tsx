@@ -26,13 +26,7 @@ interface Report {
   medium: number
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-const MOCK_REPORTS: Report[] = [
-  { id: 1, name: 'Audit Sécurité — Q1 2024', target: 'example.com',       date: '2024-05-14', vulns: 12, score: 72, format: 'PDF', status: 'ready', critical: 2, high: 4,  medium: 6  },
-  { id: 2, name: 'Rapport Conformité',        target: 'api.example.com',   date: '2024-05-10', vulns: 5,  score: 85, format: 'PDF', status: 'ready', critical: 0, high: 1,  medium: 4  },
-  { id: 3, name: 'Analyse Infrastructure',    target: 'infra.example.com', date: '2024-04-28', vulns: 23, score: 54, format: 'JSON',status: 'ready', critical: 5, high: 8,  medium: 10 },
-]
+const API = 'http://localhost:8000'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -421,14 +415,40 @@ function DownloadModal({ report, onClose }: { report: Report; onClose: () => voi
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
-  const [reports, setReports]     = useState<Report[]>(MOCK_REPORTS)
-  const [selected, setSelected]   = useState<Report | null>(null)
+  const [reports, setReports]       = useState<Report[]>([])
+  const [selected, setSelected]     = useState<Report | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [loading, setLoading]       = useState(true)
 
-  // Install jsPDF if needed (CDN fallback handled by dynamic import)
-  useEffect(() => {
-    // jsPDF is loaded dynamically on demand — no preload needed
-  }, [])
+  const fetchReports = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`${API}/scans/all?limit=200`)
+      if (!res.ok) throw new Error()
+      const scans = await res.json()
+      const mapped: Report[] = scans
+        .filter((s: any) => s.status === 'completed')
+        .map((s: any) => ({
+          id:       s.id,
+          name:     `Scan #${s.id} — ${new URL(s.target_url.startsWith('http') ? s.target_url : 'https://' + s.target_url).hostname}`,
+          target:   s.target_url.replace(/^https?:\/\//, ''),
+          date:     s.completed_at || s.created_at || new Date().toISOString(),
+          vulns:    (s.critical_count || 0) + (s.high_count || 0) + (s.medium_count || 0) + (s.low_count || 0),
+          score:    Math.round(s.security_score || 0),
+          format:   'PDF' as const,
+          status:   'ready' as const,
+          critical: s.critical_count || 0,
+          high:     s.high_count || 0,
+          medium:   s.medium_count || 0,
+        }))
+      setReports(mapped)
+    } catch {
+      toast.error('Backend inaccessible — données indisponibles')
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchReports() }, [])
 
   const handleDelete = (id: number) => {
     if (!confirm('Supprimer ce rapport ?')) return
@@ -438,23 +458,10 @@ export default function ReportsPage() {
 
   const handleGenerate = async () => {
     setGenerating(true)
-    await new Promise(r => setTimeout(r, 1800))
-    const newReport: Report = {
-      id:       Date.now(),
-      name:     `Rapport Auto — ${new Date().toLocaleDateString('fr-FR')}`,
-      target:   'nouveau-scan.com',
-      date:     new Date().toISOString().split('T')[0],
-      vulns:    Math.floor(Math.random() * 15) + 1,
-      score:    Math.floor(Math.random() * 40) + 50,
-      format:   'PDF',
-      status:   'ready',
-      critical: Math.floor(Math.random() * 3),
-      high:     Math.floor(Math.random() * 5),
-      medium:   Math.floor(Math.random() * 8),
-    }
-    setReports(prev => [newReport, ...prev])
+    toast.info('Récupération des derniers scans…')
+    await fetchReports()
     setGenerating(false)
-    toast.success('Rapport généré !')
+    toast.success('Rapports mis à jour depuis les scans réels !')
   }
 
   const critical  = reports.reduce((a, r) => a + r.critical, 0)
@@ -535,11 +542,17 @@ export default function ReportsPage() {
           </motion.div>
 
           {/* Reports list */}
-          {reports.length === 0 ? (
+          {loading ? (
+            <div className="rounded-2xl p-16 text-center"
+              style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(30,41,59,0.8)' }}>
+              <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm" style={{ color: '#475569' }}>Chargement des rapports…</p>
+            </div>
+          ) : reports.length === 0 ? (
             <div className="rounded-2xl p-16 text-center"
               style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(30,41,59,0.8)' }}>
               <FileText size={32} style={{ color: '#334155', margin: '0 auto 12px' }} />
-              <p className="text-sm" style={{ color: '#475569' }}>Aucun rapport disponible</p>
+              <p className="text-sm" style={{ color: '#475569' }}>Aucun scan complété — lancez un scan d'abord</p>
             </div>
           ) : (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}

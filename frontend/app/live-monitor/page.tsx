@@ -150,8 +150,6 @@ export default function LiveMonitorPage() {
   const [paused, setPaused]       = useState(false)
   const [tick, setTick]           = useState(0)
   const [mounted, setMounted]     = useState(false)
-  const [cpu, setCpu]             = useState(25.0)
-  const [mem, setMem]             = useState(45.0)
   const logRef                    = useRef<HTMLDivElement>(null)
   const pausedRef                 = useRef(false)
 
@@ -232,9 +230,6 @@ export default function LiveMonitorPage() {
     }
 
     setTick(t => t + 1)
-    // Mise à jour des métriques système côté client uniquement
-    setCpu(parseFloat((Math.random() * 30 + 15).toFixed(1)))
-    setMem(parseFloat((Math.random() * 25 + 35).toFixed(1)))
   }, [addLog])
 
   useEffect(() => {
@@ -244,25 +239,27 @@ export default function LiveMonitorPage() {
     return () => clearInterval(id)
   }, [poll, addLog])
 
-  // Simulation d'événements réseau aléatoires
+  // Événements réels basés sur les changements de stats
+  const prevStatsRef = useRef<Stats | null>(null)
   useEffect(() => {
-    if (!online) return
-    const events = [
-      () => addLog(makeLog('info',    'FIREWALL', 'Règle pare-feu évaluée — trafic entrant autorisé')),
-      () => addLog(makeLog('debug',   'TLS',      'Handshake TLS 1.3 établi avec le client')),
-      () => addLog(makeLog('warn',    'RATE-LIM', 'Seuil de requêtes approché (85%)')),
-      () => addLog(makeLog('info',    'AUTH',     'Jeton JWT validé pour l\'utilisateur courant')),
-      () => addLog(makeLog('success', 'DB',       'Requête SQL exécutée en <2ms')),
-      () => addLog(makeLog('debug',   'CACHE',    'Cache miss — chargement depuis la base de données')),
-      () => addLog(makeLog('info',    'API',      'GET /vulnerabilities/stats — 200 OK')),
-      () => addLog(makeLog('warn',    'DISK',     'Utilisation disque à 72%')),
-    ]
-    const id = setInterval(() => {
-      if (!pausedRef.current)
-        events[Math.floor(Math.random() * events.length)]()
-    }, 3200)
-    return () => clearInterval(id)
-  }, [online, addLog])
+    if (!stats || !online) return
+    const prev = prevStatsRef.current
+    if (prev) {
+      if (stats.critical > prev.critical)
+        addLog(makeLog('critical', 'CVE-DB', `+${stats.critical - prev.critical} nouvelle(s) vuln. CRITIQUE(S) détectée(s)`))
+      if (stats.high > prev.high)
+        addLog(makeLog('warn', 'CVE-DB', `+${stats.high - prev.high} nouvelle(s) vuln. HIGH détectée(s)`))
+      if (stats.active_scans > prev.active_scans)
+        addLog(makeLog('info', 'SCANNER', `Nouveau scan démarré — ${stats.active_scans} scan(s) actif(s)`))
+      if (stats.active_scans < prev.active_scans && prev.active_scans > 0)
+        addLog(makeLog('success', 'SCANNER', `Scan terminé — ${stats.total_vulns} vulnérabilités en base`))
+      if (!stats.db_connected && prev.db_connected)
+        addLog(makeLog('critical', 'DB', 'Connexion base de données perdue'))
+      if (stats.db_connected && !prev.db_connected)
+        addLog(makeLog('success', 'DB', 'Connexion base de données rétablie'))
+    }
+    prevStatsRef.current = stats
+  }, [stats, online, addLog])
 
   const clearLogs = () => setLogs([])
 
@@ -452,9 +449,9 @@ export default function LiveMonitorPage() {
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             {[
-              { label: 'CPU',          value: mounted ? `${cpu}%`        : '—', color: '#ef4444', icon: <Cpu size={11} /> },
-              { label: 'Mémoire',      value: mounted ? `${mem}%`        : '—', color: '#a78bfa', icon: <HardDrive size={11} /> },
-              { label: 'Requêtes/min', value: mounted ? (tick * 3 + 12).toString() : '—', color: '#22c55e', icon: <TrendingUp size={11} /> },
+              { label: 'Backend',      value: online ? 'EN LIGNE' : 'HORS LIGNE', color: online ? '#22c55e' : '#ef4444', icon: <Wifi size={11} /> },
+              { label: 'Base de données', value: stats?.db_connected ? 'Connectée' : 'Déconnectée', color: stats?.db_connected ? '#22c55e' : '#ef4444', icon: <Database size={11} /> },
+              { label: 'Polls API',    value: mounted ? tick.toString() : '—', color: '#22c55e', icon: <TrendingUp size={11} /> },
               { label: 'Uptime',       value: mounted ? `${Math.floor(tick * 5 / 60)}m ${(tick * 5) % 60}s` : '—', color: '#f97316', icon: <Clock size={11} /> },
             ].map(m => (
               <div key={m.label} className="flex items-center gap-2">

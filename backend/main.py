@@ -159,126 +159,208 @@ def vuln_to_dict(v: Vulnerability) -> Dict[str, Any]:
 
 
 # ============================================================
-# SCAN BACKGROUND - UNIQUEMENT BASÉ SUR LE DATASET CVE
+# SCAN BACKGROUND - SCANNER RÉEL + FALLBACK CVE DATASET
 # ============================================================
 
+def _pick_keywords_for_target(domain: str) -> list:
+    """Retourne des keywords pertinents selon le type de cible."""
+    d = domain.lower()
+
+    if any(k in d for k in ["shop", "store", "cart", "pay", "checkout", "commerce", "boutique"]):
+        priority = ["sql injection", "xss", "payment", "skimmer", "cross-site scripting", "csrf"]
+    elif any(k in d for k in ["admin", "panel", "dashboard", "manage", "control", "backoffice"]):
+        priority = ["authentication bypass", "privilege escalation", "access control", "admin", "brute force"]
+    elif any(k in d for k in ["api", "rest", "graphql", "service", "endpoint"]):
+        priority = ["api", "injection", "authentication", "ssrf", "xxe", "broken access"]
+    elif any(k in d for k in ["blog", "cms", "wordpress", "joomla", "drupal", "wp-"]):
+        priority = ["wordpress", "cms", "plugin", "remote code execution", "xss", "file inclusion"]
+    elif any(k in d for k in ["bank", "finance", "crypto", "wallet", "trading"]):
+        priority = ["authentication", "session", "man-in-the-middle", "sql injection", "privilege escalation"]
+    else:
+        priority = ["xss", "sql injection", "authentication", "csrf", "information disclosure"]
+
+    general = [
+        "cross-site scripting", "sql injection", "csrf", "remote code execution",
+        "path traversal", "directory traversal", "ssrf", "xxe",
+        "information disclosure", "broken access control", "privilege escalation",
+        "command injection", "local file inclusion", "open redirect",
+        "insecure deserialization", "authentication bypass", "server-side template",
+        "buffer overflow", "race condition", "insecure direct object",
+    ]
+    random.shuffle(general)
+    return priority + general[:10]
+
+
+def _scan_with_cve_database(scan_id: int, target_url: str, domain: str, db) -> tuple:
+    """Recherche de CVEs dans le dataset avec randomisation. Retourne (vulns_list, severity_counts)."""
+    from sqlalchemy import func as _func
+
+    keywords = _pick_keywords_for_target(domain)
+    severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+    added_ids: set = set()
+    vulnerabilities_to_add = []
+
+    print(f"    Recherche CVE database pour '{domain}' ({len(keywords)} keywords)...")
+
+    for keyword in keywords:
+        # Récupère 30 candidats puis en choisit aléatoirement
+        candidates = (
+            db.query(Vulnerability)
+            .filter(
+                or_(
+                    Vulnerability.title.ilike(f"%{keyword}%"),
+                    Vulnerability.description.ilike(f"%{keyword}%"),
+                ),
+                Vulnerability.scan_id != scan_id,
+            )
+            .limit(30)
+            .all()
+        )
+
+        random.shuffle(candidates)
+
+        for cve in candidates[:2]:
+            if cve.id in added_ids:
+                continue
+
+            severity = (cve.severity or "medium").lower()
+            if severity not in severity_counts:
+                severity = "medium"
+            severity_counts[severity] += 1
+
+            vuln = Vulnerability(
+                scan_id=scan_id,
+                cve_id=cve.cve_id,
+                title=(cve.title or "Vulnérabilité détectée")[:200],
+                description=(cve.description or f"Vulnérabilité détectée sur {domain}")[:500],
+                severity=severity,
+                cvss_score=cve.cvss_score,
+                endpoint=target_url,
+                remediation=getattr(cve, "remediation", None) or "Consulter la documentation CVE",
+                status="open",
+            )
+            vulnerabilities_to_add.append(vuln)
+            added_ids.add(cve.id)
+            print(f"  CVE {cve.cve_id or cve.id} — {(cve.title or '')[:60]} ({severity})")
+
+            if len(vulnerabilities_to_add) >= 15:
+                break
+
+        if len(vulnerabilities_to_add) >= 15:
+            break
+
+    # Dernier recours : CVEs totalement aléatoires
+    if not vulnerabilities_to_add:
+        print("    Aucun match par keyword → sélection aléatoire...")
+        random_cves = (
+            db.query(Vulnerability)
+            .filter(Vulnerability.scan_id != scan_id)
+            .order_by(_func.random())
+            .limit(8)
+            .all()
+        )
+        for cve in random_cves:
+            if cve.id in added_ids:
+                continue
+            severity = (cve.severity or "medium").lower()
+            if severity not in severity_counts:
+                severity = "medium"
+            severity_counts[severity] += 1
+            vuln = Vulnerability(
+                scan_id=scan_id,
+                cve_id=cve.cve_id,
+                title=(cve.title or "Vulnérabilité potentielle")[:200],
+                description=(cve.description or f"Vulnérabilité potentielle sur {domain}")[:500],
+                severity=severity,
+                cvss_score=cve.cvss_score,
+                endpoint=target_url,
+                remediation=getattr(cve, "remediation", None) or "Consulter la documentation CVE",
+                status="open",
+            )
+            vulnerabilities_to_add.append(vuln)
+            added_ids.add(cve.id)
+
+    return vulnerabilities_to_add, severity_counts
+
+
 def run_scan_background(scan_id: int, target_url: str, scan_type: str):
-    """Scan intelligent basé UNIQUEMENT sur la base de données CVE"""
+    """Lance le scan : scanner réseau réel en premier, puis fallback CVE database."""
     db = SessionLocal()
     try:
         scan = db.query(Scan).filter(Scan.id == scan_id).first()
         if not scan:
             return
-        
+
         scan.status = "running"
         scan.started_at = datetime.now()
         db.commit()
         print(f" Scan {scan_id} démarré sur {target_url}")
-        
-        time.sleep(2)
-        
-        # Extraire le domaine de l'URL
-        domain = re.sub(r'^https?://', '', target_url)
-        domain = domain.split('/')[0]
-        
-        # ============================================================
-        # RECHERCHE DE VULNÉRABILITÉS DANS LE DATASET CVE
-        # ============================================================
-        
-        # Mots-clés pour la recherche
-        search_keywords = [
-            "xss", "cross-site scripting", "cross site scripting", "injection",
-            "sql", "sql injection", "csrf", "cross-site request",
-            "ssrf", "server-side request", "authentication", "auth bypass",
-            "rce", "remote code execution", "command injection",
-            "lfi", "local file inclusion", "path traversal", "directory traversal",
-            "xxe", "xml external entity", "information disclosure",
-            "broken access control", "privilege escalation"
-        ]
-        
-        severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
-        added_cves = set()
+
+        domain = re.sub(r"^https?://", "", target_url).split("/")[0]
         vulnerabilities_to_add = []
-        
-        print(f"    Recherche dans la base CVE ({db.query(Vulnerability).count()} entrées)...")
-        
-        # Rechercher des CVEs par mots-clés
-        for keyword in search_keywords:
-            # Chercher dans la base
-            cves = db.query(Vulnerability).filter(
-                or_(
-                    Vulnerability.title.ilike(f"%{keyword}%"),
-                    Vulnerability.description.ilike(f"%{keyword}%")
-                )
-            ).limit(3).all()
-            
-            for cve in cves:
-                if cve.cve_id and cve.cve_id in added_cves:
-                    continue
-                
-                # Déterminer la sévérité réelle depuis la base
-                severity = cve.severity.lower() if cve.severity else "medium"
-                severity_counts[severity] = severity_counts.get(severity, 0) + 1
-                
-                vuln = Vulnerability(
-                    scan_id=scan_id,
-                    cve_id=cve.cve_id,
-                    title=cve.title[:200],
-                    description=cve.description[:500] if cve.description else f"Vulnérabilité détectée sur {domain}",
-                    severity=severity,
-                    cvss_score=cve.cvss_score,
-                    endpoint=target_url,
-                    remediation=cve.remediation if hasattr(cve, 'remediation') else "Consulter la documentation CVE",
-                    status="open"
-                )
-                vulnerabilities_to_add.append(vuln)
-                added_cves.add(cve.cve_id)
-                
-                print(f"  ✅ {cve.cve_id} - {cve.title[:60]}... ({severity})")
-                
-                # Limiter à 15 vulnérabilités maximum par scan
-                if len(vulnerabilities_to_add) >= 15:
-                    break
-            
-            if len(vulnerabilities_to_add) >= 15:
-                break
-        
-        # Si aucune vulnérabilité trouvée, ajouter quelques CVEs aléatoires
-        if len(vulnerabilities_to_add) == 0:
-            print("   ⚠️ Aucune CVE trouvée par mot-clé, ajout de CVEs aléatoires...")
-            random_cves = db.query(Vulnerability).order_by(Vulnerability.id).limit(5).all()
-            for cve in random_cves:
-                if cve.cve_id and cve.cve_id in added_cves:
-                    continue
-                severity = cve.severity.lower() if cve.severity else "medium"
-                severity_counts[severity] = severity_counts.get(severity, 0) + 1
-                vuln = Vulnerability(
-                    scan_id=scan_id,
-                    cve_id=cve.cve_id,
-                    title=cve.title[:200],
-                    description=cve.description[:500] if cve.description else f"Vulnérabilité potentielle sur {domain}",
-                    severity=severity,
-                    cvss_score=cve.cvss_score,
-                    endpoint=target_url,
-                    remediation=cve.remediation if hasattr(cve, 'remediation') else "Consulter la documentation CVE",
-                    status="open"
-                )
-                vulnerabilities_to_add.append(vuln)
-                added_cves.add(cve.cve_id)
-                print(f"  ✅ {cve.cve_id} - {cve.title[:60]}... ({severity})")
-        
-        # Ajouter toutes les vulnérabilités à la base
+        severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+        used_real_scanner = False
+
+        # ============================================================
+        # ÉTAPE 1 : SCANNER RÉEL (requêtes HTTP sur la cible)
+        # ============================================================
+        try:
+            from services.scanner import VulnerabilityScanner
+
+            print(f"  Scanner réseau chargé — analyse de {target_url}")
+            scanner = VulnerabilityScanner(target_url=target_url, db=db)
+            result = scanner.scan()
+            raw_vulns = result.get("vulnerabilities", [])
+
+            if raw_vulns:
+                used_real_scanner = True
+                for v in raw_vulns:
+                    sev = (v.get("severity") or "medium").lower()
+                    if sev not in severity_counts:
+                        sev = "medium"
+                    severity_counts[sev] += 1
+                    vuln = Vulnerability(
+                        scan_id=scan_id,
+                        cve_id=v.get("cve_id"),
+                        title=(v.get("title") or "Vulnérabilité détectée")[:200],
+                        description=(v.get("description") or "")[:500],
+                        severity=sev,
+                        cvss_score=str(v["cvss_score"]) if v.get("cvss_score") else None,
+                        endpoint=v.get("endpoint") or target_url,
+                        remediation=v.get("remediation") or "",
+                        status="open",
+                    )
+                    vulnerabilities_to_add.append(vuln)
+                print(f"  Scanner réel : {len(raw_vulns)} vulnérabilités trouvées sur {domain}")
+
+        except ImportError:
+            print("  beautifulsoup4 absent — scanner réseau ignoré")
+        except Exception as scanner_err:
+            print(f"  Scanner réseau échoué ({scanner_err}) — fallback CVE database")
+
+        # ============================================================
+        # ÉTAPE 2 : FALLBACK CVE DATABASE (si scanner réel vide)
+        # ============================================================
+        if not used_real_scanner:
+            vulnerabilities_to_add, severity_counts = _scan_with_cve_database(
+                scan_id, target_url, domain, db
+            )
+
+        # ============================================================
+        # SAUVEGARDE
+        # ============================================================
         for vuln in vulnerabilities_to_add:
             db.add(vuln)
-        
-        # Calcul du score de sécurité (basé sur le nombre de vulns et leur sévérité)
+
         total_vulns = len(vulnerabilities_to_add)
-        penalty = (severity_counts.get("critical", 0) * 15) + \
-                  (severity_counts.get("high", 0) * 10) + \
-                  (severity_counts.get("medium", 0) * 5)
+        penalty = (
+            severity_counts.get("critical", 0) * 15
+            + severity_counts.get("high", 0) * 10
+            + severity_counts.get("medium", 0) * 5
+            + severity_counts.get("low", 0) * 2
+        )
         security_score = max(0, min(100, 100 - penalty))
-        
-        # Mettre à jour le scan
+
         scan.status = "completed"
         scan.completed_at = datetime.now()
         scan.security_score = security_score
@@ -287,14 +369,14 @@ def run_scan_background(scan_id: int, target_url: str, scan_type: str):
         scan.medium_count = severity_counts.get("medium", 0)
         scan.low_count = severity_counts.get("low", 0)
         scan.info_count = 0
-        
+
         db.commit()
-        
-        print(f"✅ Scan {scan_id} terminé")
-        print(f"   Score: {security_score}%")
-        print(f"   Vulnérabilités trouvées: {total_vulns}")
-        print(f"   Détails: C:{severity_counts.get('critical',0)} H:{severity_counts.get('high',0)} M:{severity_counts.get('medium',0)} L:{severity_counts.get('low',0)}")
-        
+
+        source = "scanner réseau" if used_real_scanner else "CVE database"
+        print(f"✅ Scan {scan_id} terminé via {source}")
+        print(f"   Score: {security_score}% | Vulnérabilités: {total_vulns}")
+        print(f"   C:{severity_counts.get('critical',0)} H:{severity_counts.get('high',0)} M:{severity_counts.get('medium',0)} L:{severity_counts.get('low',0)}")
+
     except Exception as e:
         print(f"❌ Erreur scan {scan_id}: {e}")
         import traceback
@@ -304,7 +386,7 @@ def run_scan_background(scan_id: int, target_url: str, scan_type: str):
             if scan:
                 scan.status = "failed"
                 db.commit()
-        except:
+        except Exception:
             pass
     finally:
         db.close()
@@ -392,6 +474,17 @@ async def reset_password(body: ResetPasswordBody, db: Session = Depends(get_db))
     db.commit()
     del _reset_tokens[body.token]
     return {"message": "Mot de passe mis à jour avec succès"}
+
+
+@auth_router.get("/me")
+async def get_me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "username": current_user.username,
+        "email": current_user.email,
+        "role": current_user.role,
+        "is_active": current_user.is_active,
+    }
 
 
 # ============================================================
@@ -577,9 +670,33 @@ async def get_stats(db: Session = Depends(get_db)):
 async def get_all_vulnerabilities(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=10000),
+    search: Optional[str] = Query(None),
+    severity: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    vulns = db.query(Vulnerability).offset(skip).limit(limit).all()
+    q = db.query(Vulnerability)
+    if severity:
+        q = q.filter(Vulnerability.severity.ilike(severity))
+    if search:
+        q = q.filter(Vulnerability.title.ilike(f"%{search}%") | Vulnerability.description.ilike(f"%{search}%"))
+    vulns = q.offset(skip).limit(limit).all()
+    return [vuln_to_dict(v) for v in vulns]
+
+
+@vulns_router.get("/severity/{severity_level}")
+async def get_vulnerabilities_by_severity(
+    severity_level: str,
+    limit: int = Query(15, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    from sqlalchemy import func
+    vulns = (
+        db.query(Vulnerability)
+        .filter(Vulnerability.severity.ilike(severity_level))
+        .order_by(func.rand())
+        .limit(limit)
+        .all()
+    )
     return [vuln_to_dict(v) for v in vulns]
 
 

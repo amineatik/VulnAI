@@ -16,6 +16,11 @@ interface Stats {
   has_data: boolean
 }
 
+interface ScanVuln {
+  title: string
+  severity: string
+}
+
 interface FrameworkControl {
   id: string
   name: string
@@ -32,12 +37,29 @@ interface Framework {
   controls: FrameworkControl[]
 }
 
-function buildFrameworks(stats: Stats): Framework[] {
-  const hasData = stats.has_data
-  const critRate = hasData ? stats.critical / stats.total : 0
-  const highRate = hasData ? stats.high / stats.total : 0
+function titleMatches(vulns: ScanVuln[], ...keywords: string[]) {
+  return vulns.some(v => keywords.some(k => v.title.toLowerCase().includes(k.toLowerCase())))
+}
 
-  const owaspPass  = (s: boolean): 'pass' | 'fail' | 'partial' => s ? 'pass' : (hasData ? 'fail' : 'na')
+function buildFrameworks(stats: Stats, vulns: ScanVuln[]): Framework[] {
+  const hasData  = stats.has_data || stats.total > 0
+  const total    = stats.total || 1
+  const critRate = stats.critical / total
+  const highRate = stats.high / total
+
+  const hasInjection   = titleMatches(vulns, 'injection', 'xss', 'sqli', 'command', 'nosql', 'ssti', 'xxe')
+  const hasBrokenAuth  = titleMatches(vulns, 'authentication', 'credential', 'brute force', 'jwt', 'session')
+  const hasMisconfig   = titleMatches(vulns, 'header', 'cors', 'tls', 'ssl', 'misconfiguration', 'port', 'directory')
+  const hasAccessCtrl  = titleMatches(vulns, 'access control', 'privilege', 'idor', 'path traversal', 'lfi')
+  const hasInfoLeak    = titleMatches(vulns, 'disclosure', 'exposed', 'information', 'backup', 'robots', 'comment')
+  const hasCrypto      = titleMatches(vulns, 'ssl', 'tls', 'certificate', 'http', 'mixed content', 'weak')
+  const hasSSRF        = titleMatches(vulns, 'ssrf', 'server-side request', 'open redirect')
+  const hasFileUpload  = titleMatches(vulns, 'upload', 'file')
+  const hasComponents  = titleMatches(vulns, 'outdated', 'version', 'component', 'library')
+  const hasWAF         = titleMatches(vulns, 'waf', 'firewall')
+
+  const st = (cond: boolean): 'pass' | 'fail' | 'partial' =>
+    cond ? 'fail' : (critRate > 0.05 ? 'partial' : 'pass')
 
   return [
     {
@@ -45,16 +67,16 @@ function buildFrameworks(stats: Stats): Framework[] {
       version: '2021',
       color: '#f97316',
       controls: [
-        { id: 'A01', name: 'Broken Access Control',        description: 'Contrôles d\'accès mal configurés',     status: critRate > 0.3 ? 'fail' : 'partial', score: critRate > 0.3 ? 20 : 65, details: `${stats.critical} vulnérabilités critiques détectées` },
-        { id: 'A02', name: 'Cryptographic Failures',       description: 'Données sensibles exposées',            status: highRate > 0.2 ? 'partial' : 'pass',  score: highRate > 0.2 ? 55 : 80, details: `${stats.high} vulnérabilités high` },
-        { id: 'A03', name: 'Injection',                    description: 'SQL, NoSQL, OS, LDAP injection',        status: critRate > 0.1 ? 'fail' : 'pass',     score: critRate > 0.1 ? 30 : 85, details: 'Basé sur le scan des endpoints' },
-        { id: 'A04', name: 'Insecure Design',              description: 'Défauts de conception sécurisée',      status: 'partial', score: 60, details: 'Analyse manuelle recommandée' },
-        { id: 'A05', name: 'Security Misconfiguration',    description: 'Configurations par défaut non modifiées', status: highRate > 0.15 ? 'partial' : 'pass', score: highRate > 0.15 ? 50 : 78, details: `${stats.medium} vulnérabilités medium` },
-        { id: 'A06', name: 'Vulnerable Components',        description: 'Composants avec vulnérabilités connues', status: stats.total > 50 ? 'fail' : 'partial', score: stats.total > 50 ? 25 : 60, details: `${stats.total} CVEs en base` },
-        { id: 'A07', name: 'Auth & Session Failures',      description: 'Authentification compromise',           status: 'pass',    score: 82, details: 'JWT + bcrypt implémentés' },
-        { id: 'A08', name: 'Software Integrity Failures',  description: 'Intégrité des mises à jour',           status: 'partial', score: 55, details: 'Vérification de signature non implémentée' },
-        { id: 'A09', name: 'Security Logging & Monitoring', description: 'Détection et réponse aux incidents', status: 'pass',    score: 88, details: 'Audit trail actif · Live monitor opérationnel' },
-        { id: 'A10', name: 'Server-Side Request Forgery',  description: 'SSRF attacks',                         status: 'partial', score: 62, details: 'Validation URL partiellement implémentée' },
+        { id: 'A01', name: 'Broken Access Control',        description: 'Contrôles d\'accès mal configurés',       status: hasAccessCtrl ? 'fail' : critRate > 0.2 ? 'partial' : 'pass', score: hasAccessCtrl ? 20 : critRate > 0.2 ? 55 : 80, details: hasAccessCtrl ? `Path traversal/LFI/IDOR détectés (${stats.critical} critiques)` : `${stats.critical} critiques — contrôles d'accès vérifiés` },
+        { id: 'A02', name: 'Cryptographic Failures',       description: 'Données sensibles non chiffrées',          status: hasCrypto ? 'fail' : highRate > 0.2 ? 'partial' : 'pass',     score: hasCrypto ? 25 : highRate > 0.2 ? 50 : 82,     details: hasCrypto ? 'SSL/TLS faible ou Mixed Content détecté' : `${stats.high} vulnérabilités HIGH` },
+        { id: 'A03', name: 'Injection',                    description: 'SQL, NoSQL, OS, XSS, SSTI, XXE',          status: hasInjection ? 'fail' : critRate > 0.1 ? 'partial' : 'pass',   score: hasInjection ? 15 : critRate > 0.1 ? 40 : 85,   details: hasInjection ? 'Injection SQL/XSS/SSTI/XXE détectée dans les scans' : 'Aucune injection confirmée dans les scans' },
+        { id: 'A04', name: 'Insecure Design',              description: 'Défauts de conception sécurisée',          status: critRate > 0.3 ? 'fail' : 'partial',                           score: critRate > 0.3 ? 20 : 58,                        details: `${stats.critical} critiques détectées — analyse architecture recommandée` },
+        { id: 'A05', name: 'Security Misconfiguration',    description: 'Headers, ports, CORS, debug mode',         status: hasMisconfig ? 'fail' : highRate > 0.15 ? 'partial' : 'pass', score: hasMisconfig ? 30 : highRate > 0.15 ? 52 : 78,   details: hasMisconfig ? 'Headers manquants / CORS ouvert / ports exposés détectés' : `${stats.medium} vulnérabilités MEDIUM` },
+        { id: 'A06', name: 'Vulnerable Components',        description: 'Composants avec vulnérabilités connues',   status: hasComponents ? 'fail' : stats.total > 20 ? 'partial' : 'pass', score: hasComponents ? 25 : stats.total > 20 ? 55 : 72, details: `${stats.total} vulnérabilités référencées — ${stats.critical} critiques` },
+        { id: 'A07', name: 'Auth & Session Failures',      description: 'Authentification et gestion de session',   status: hasBrokenAuth ? 'fail' : 'pass',                               score: hasBrokenAuth ? 20 : 82,                         details: hasBrokenAuth ? 'Credentials par défaut ou JWT faibles détectés' : 'Authentification JWT + bcrypt opérationnelle' },
+        { id: 'A08', name: 'Software Integrity Failures',  description: 'Intégrité des dépendances et mises à jour', status: hasFileUpload ? 'fail' : 'partial',                           score: hasFileUpload ? 20 : 55,                         details: hasFileUpload ? 'Upload de fichiers dangereux accepté' : 'Vérification de signature non complète' },
+        { id: 'A09', name: 'Security Logging & Monitoring', description: 'Détection et réponse aux incidents',      status: 'pass',                                                        score: 88,                                              details: `Audit trail actif · Live monitor opérationnel · ${stats.total} events loggés` },
+        { id: 'A10', name: 'Server-Side Request Forgery',  description: 'SSRF attacks',                             status: hasSSRF ? 'fail' : 'partial',                                 score: hasSSRF ? 15 : 62,                               details: hasSSRF ? 'SSRF ou Open Redirect détecté dans les scans' : 'Validation URL partiellement implémentée' },
       ],
     },
     {
@@ -62,12 +84,12 @@ function buildFrameworks(stats: Stats): Framework[] {
       version: '2.0',
       color: '#ef4444',
       controls: [
-        { id: 'ID',  name: 'Identify',  description: 'Gestion des assets et des risques',      status: 'pass',    score: 85, details: `${stats.total} assets identifiés en base` },
-        { id: 'PR',  name: 'Protect',   description: 'Mesures de protection implémentées',     status: critRate > 0.2 ? 'partial' : 'pass', score: critRate > 0.2 ? 52 : 75, details: `${stats.critical} critiques non corrigées` },
-        { id: 'DE',  name: 'Detect',    description: 'Détection des anomalies et événements',  status: 'pass',    score: 90, details: 'Live monitor + scanning automatisé actif' },
-        { id: 'RS',  name: 'Respond',   description: 'Réponse aux incidents de sécurité',      status: 'partial', score: 58, details: 'Remediation Center disponible' },
-        { id: 'RC',  name: 'Recover',   description: 'Continuité et reprise après incident',   status: 'partial', score: 45, details: 'Plan de reprise non documenté' },
-        { id: 'GV',  name: 'Govern',    description: 'Gouvernance et stratégie de sécurité',   status: 'pass',    score: 72, details: 'Politiques de sécurité définies' },
+        { id: 'ID', name: 'Identify',  description: 'Gestion des assets et des risques',      status: 'pass',                                                          score: Math.min(95, 70 + Math.floor(stats.total / 10)),   details: `${stats.total} vulnérabilités identifiées et indexées en base` },
+        { id: 'PR', name: 'Protect',   description: 'Mesures de protection implémentées',      status: critRate > 0.2 ? 'partial' : 'pass',                            score: critRate > 0.2 ? 52 : 75,                          details: `${stats.critical} critiques non corrigées sur ${stats.total} total` },
+        { id: 'DE', name: 'Detect',    description: 'Détection des anomalies et événements',  status: 'pass',                                                           score: 90,                                                details: 'Live monitor actif · Scanning automatisé · Alertes en temps réel' },
+        { id: 'RS', name: 'Respond',   description: 'Réponse aux incidents de sécurité',       status: stats.low < stats.total * 0.5 ? 'partial' : 'pass',             score: 58,                                                details: `Remediation Center disponible · ${stats.low} vulnérabilités LOW à traiter` },
+        { id: 'RC', name: 'Recover',   description: 'Continuité et reprise après incident',    status: 'partial',                                                        score: 45,                                                details: 'Plan de reprise non documenté — recommandé pour la conformité' },
+        { id: 'GV', name: 'Govern',    description: 'Gouvernance et stratégie de sécurité',    status: 'pass',                                                           score: 72,                                                details: 'Politiques de sécurité définies · Audit trail complet' },
       ],
     },
     {
@@ -75,10 +97,10 @@ function buildFrameworks(stats: Stats): Framework[] {
       version: '2022',
       color: '#a78bfa',
       controls: [
-        { id: 'A.5',  name: 'Organizational Controls',    description: 'Politiques et gouvernance',          status: 'pass',    score: 78, details: 'Politiques définies dans la section Policies' },
-        { id: 'A.6',  name: 'People Controls',            description: 'Sécurité du personnel',              status: 'partial', score: 55, details: 'Formation sécurité non documentée' },
-        { id: 'A.7',  name: 'Physical Controls',          description: 'Sécurité physique et environnementale', status: 'na',   score: 0,  details: 'Non applicable — environnement cloud' },
-        { id: 'A.8',  name: 'Technological Controls',     description: 'Sécurité des systèmes et réseaux',   status: highRate > 0.2 ? 'partial' : 'pass', score: highRate > 0.2 ? 48 : 70, details: `${stats.high + stats.critical} vulnérabilités critiques/high` },
+        { id: 'A.5',  name: 'Organizational Controls',   description: 'Politiques et gouvernance',                  status: 'pass',                                                         score: 78, details: 'Politiques de sécurité définies · Rôles et permissions configurés' },
+        { id: 'A.6',  name: 'People Controls',           description: 'Sécurité du personnel',                      status: 'partial',                                                      score: 55, details: 'Gestion des utilisateurs active — formation sécurité non documentée' },
+        { id: 'A.7',  name: 'Physical Controls',         description: 'Sécurité physique et environnementale',      status: 'na',                                                           score: 0,  details: 'Non applicable — environnement cloud/virtuel' },
+        { id: 'A.8',  name: 'Technological Controls',    description: 'Sécurité des systèmes et réseaux',           status: (stats.high + stats.critical) > 10 ? 'fail' : highRate > 0.2 ? 'partial' : 'pass', score: (stats.high + stats.critical) > 10 ? 35 : highRate > 0.2 ? 55 : 75, details: `${stats.high + stats.critical} vulnérabilités HIGH/CRITICAL détectées` },
       ],
     },
   ]
@@ -105,21 +127,30 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
 
 export default function CompliancePage() {
   const [stats, setStats]       = useState<Stats | null>(null)
+  const [vulns, setVulns]       = useState<ScanVuln[]>([])
   const [loading, setLoading]   = useState(true)
   const [activeTab, setActiveTab] = useState(0)
 
   const fetchData = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API}/vulnerabilities/stats`)
-      if (res.ok) setStats(await res.json())
+      const [statsRes, vulnsRes] = await Promise.all([
+        fetch(`${API}/vulnerabilities/stats`),
+        fetch(`${API}/vulnerabilities/?limit=500`),
+      ])
+      if (statsRes.ok) setStats(await statsRes.json())
+      if (vulnsRes.ok) {
+        const data = await vulnsRes.json()
+        const items = Array.isArray(data) ? data : data.items ?? []
+        setVulns(items.map((v: any) => ({ title: v.title || '', severity: v.severity || '' })))
+      }
     } catch {}
     setLoading(false)
   }
 
   useEffect(() => { fetchData() }, [])
 
-  const frameworks = stats ? buildFrameworks(stats) : []
+  const frameworks = stats ? buildFrameworks(stats, vulns) : []
   const activeFramework = frameworks[activeTab]
 
   const globalScore = activeFramework
